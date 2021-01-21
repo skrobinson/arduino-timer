@@ -37,9 +37,8 @@
 
 #include <Arduino.h>
 
-#ifndef TIMER_MAX_TASKS
-    #define TIMER_MAX_TASKS 0x10
-#endif
+/* Set the max tasks at compile time. */
+constexpr size_t TIMER_MAX_TASKS { 0x10 };
 
 #define _timer_foreach_task(T, task) \
     for (T task = tasks; task < tasks + max_tasks; ++task)
