@@ -45,10 +45,10 @@
     for (T task = tasks; task < tasks + max_tasks; ++task)
 
 #define timer_foreach_task(T) \
-    _timer_foreach_task(struct task_t *, T)
+    _timer_foreach_task(task_t *, T)
 
 #define timer_foreach_const_task(T) \
-    _timer_foreach_task(const struct task_t *, T)
+    _timer_foreach_task(const task_t *, T)
 
 template <
     size_t max_tasks = TIMER_MAX_TASKS, /* max allocated tasks */
@@ -194,18 +194,19 @@ class Timer {
 
     size_t ctr;
 
-    struct task_t {
+    typedef struct task_t {
         handler_t handler; /* task handler callback func */
         T opaque; /* argument given to the callback handler */
         unsigned long start,
                       expires; /* when the task expires */
         size_t repeat, /* repeat task */
                id;
-    } tasks[max_tasks];
+    } task_t;
+    task_t tasks[max_tasks];
 
     inline
     void
-    remove(struct task_t *task)
+    remove(task_t *task)
     {
         task->handler = NULL;
         task->opaque = T();
@@ -217,7 +218,7 @@ class Timer {
 
     inline
     Task
-    task_id(const struct task_t * const t)
+    task_id(const task_t * const t)
     {
         const Task id = (Task)t;
 
@@ -225,7 +226,7 @@ class Timer {
     }
 
     inline
-    struct task_t *
+    task_t *
     next_task_slot()
     {
         timer_foreach_task(slot) {
@@ -236,11 +237,11 @@ class Timer {
     }
 
     inline
-    struct task_t *
+    task_t *
     add_task(unsigned long start, unsigned long expires,
              handler_t h, T opaque, bool repeat = 0)
     {
-        struct task_t * const slot = next_task_slot();
+        task_t * const slot = next_task_slot();
 
         if (!slot) return NULL;
 
