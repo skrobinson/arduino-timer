@@ -1,7 +1,7 @@
 /**
    arduino-timer - library for delaying function calls
 
-   Copyright (c) 2018, Michael Contreras
+   Copyright (c) 2018-2020, Michael Contreras and contributors
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -45,10 +45,10 @@
     for (T task = tasks; task < tasks + max_tasks; ++task)
 
 #define timer_foreach_task(T) \
-    _timer_foreach_task(struct task *, T)
+    _timer_foreach_task(struct task_t *, T)
 
 #define timer_foreach_const_task(T) \
-    _timer_foreach_task(const struct task *, T)
+    _timer_foreach_task(const struct task_t *, T)
 
 template <
     size_t max_tasks = TIMER_MAX_TASKS, /* max allocated tasks */
@@ -194,7 +194,7 @@ class Timer {
 
     size_t ctr;
 
-    struct task {
+    struct task_t {
         handler_t handler; /* task handler callback func */
         T opaque; /* argument given to the callback handler */
         unsigned long start,
@@ -205,7 +205,7 @@ class Timer {
 
     inline
     void
-    remove(struct task *task)
+    remove(struct task_t *task)
     {
         task->handler = NULL;
         task->opaque = T();
@@ -217,7 +217,7 @@ class Timer {
 
     inline
     Task
-    task_id(const struct task * const t)
+    task_id(const struct task_t * const t)
     {
         const Task id = (Task)t;
 
@@ -225,7 +225,7 @@ class Timer {
     }
 
     inline
-    struct task *
+    struct task_t *
     next_task_slot()
     {
         timer_foreach_task(slot) {
@@ -236,11 +236,11 @@ class Timer {
     }
 
     inline
-    struct task *
+    struct task_t *
     add_task(unsigned long start, unsigned long expires,
              handler_t h, T opaque, bool repeat = 0)
     {
-        struct task * const slot = next_task_slot();
+        struct task_t * const slot = next_task_slot();
 
         if (!slot) return NULL;
 
