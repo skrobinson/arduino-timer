@@ -80,13 +80,13 @@ class Timer {
         if (!task) return;
 
         for (task_t &t : tasks) {
-            if (t.handler && (t.id ^ task) == (uintptr_t)&t) {
+            if (t.handler && (t.id ^ task) == reinterpret_cast<uintptr_t>(&t)) {
                 remove(&t);
                 break;
             }
         }
 
-        task = (Task)NULL;
+        task = static_cast<Task>(NULL);
     }
 
     /* Cancel all timer tasks */
@@ -210,7 +210,7 @@ class Timer {
     Task
     task_id(const task_t * const t)
     {
-        const Task id = (Task)t;
+        const Task id = reinterpret_cast<Task>(t);
 
         return id ? id ^ t->id : id;
     }
