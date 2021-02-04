@@ -37,18 +37,8 @@
 
 #include <Arduino.h>
 
-#ifndef TIMER_MAX_TASKS
-    #define TIMER_MAX_TASKS 0x10
-#endif
-
-#define _timer_foreach_task(T, task) \
-    for (T task = tasks; task < tasks + max_tasks; ++task)
-
-#define timer_foreach_task(T) \
-    _timer_foreach_task(task_t *, T)
-
-#define timer_foreach_const_task(T) \
-    _timer_foreach_task(const task_t *, T)
+/* Set the max tasks at compile time. */
+constexpr size_t TIMER_MAX_TASKS { 0x10 };
 
 template <
     size_t max_tasks = TIMER_MAX_TASKS, /* max allocated tasks */
@@ -89,9 +79,9 @@ class Timer {
     {
         if (!task) return;
 
-        timer_foreach_task(t) {
-            if (t->handler && (t->id ^ task) == (uintptr_t)t) {
-                remove(t);
+        for (task_t &t : tasks) {
+            if (t.handler && (t.id ^ task) == (uintptr_t)&t) {
+                remove(&t);
                 break;
             }
         }
@@ -103,8 +93,8 @@ class Timer {
     void
     cancel()
     {
-        timer_foreach_task(t) {
-            remove(t);
+        for (auto &t : tasks) {
+            remove(&t);
         }
     }
 
@@ -119,16 +109,16 @@ class Timer {
     template <typename R> void
     tick()
     {
-        timer_foreach_task(task) {
-            if (task->handler) {
+        for (auto &task : tasks) {
+            if (task.handler) {
                 const unsigned long t = time_func();
-                const unsigned long duration = t - task->start;
+                const unsigned long duration = t - task.start;
 
-                if (duration >= task->expires) {
-                    task->repeat = task->handler(task->opaque) && task->repeat;
+                if (duration >= task.expires) {
+                    task.repeat = task.handler(task.opaque) && task.repeat;
 
-                    if (task->repeat) task->start = t;
-                    else remove(task);
+                    if (task.repeat) task.start = t;
+                    else remove(&task);
                 }
             }
         }
@@ -141,16 +131,16 @@ class Timer {
         unsigned long ticks = (unsigned long)-1, elapsed;
         const unsigned long start = time_func();
 
-        timer_foreach_const_task(task) {
-            if (task->handler) {
+        for (const auto &task : tasks) {
+            if (task.handler) {
                 const unsigned long t = time_func();
-                const unsigned long duration = t - task->start;
+                const unsigned long duration = t - task.start;
 
-                if (duration >= task->expires) {
+                if (duration >= task.expires) {
                     ticks = 0;
                     break;
                 } else {
-                    const unsigned long remaining = task->expires - duration;
+                    const unsigned long remaining = task.expires - duration;
                     ticks = remaining < ticks ? remaining : ticks;
                 }
             }
@@ -170,8 +160,8 @@ class Timer {
     {
         size_t s = 0;
 
-        timer_foreach_const_task(task) {
-            if (task->handler) ++s;
+        for (const auto &task : tasks) {
+            if (task.handler) ++s;
         }
 
         return s;
@@ -181,8 +171,8 @@ class Timer {
     bool
     empty() const
     {
-        timer_foreach_const_task(task) {
-            if (task->handler) return false;
+        for (const auto &task : tasks) {
+            if (task.handler) return false;
         }
 
         return true;
@@ -229,8 +219,8 @@ class Timer {
     task_t *
     next_task_slot()
     {
-        timer_foreach_task(slot) {
-            if (slot->handler == NULL) return slot;
+        for (auto &slot : tasks) {
+            if (slot.handler == NULL) return &slot;
         }
 
         return NULL;
@@ -264,9 +254,5 @@ timer_create_default()
 {
     return Timer<>();
 }
-
-#undef _timer_foreach_task
-#undef timer_foreach_task
-#undef timer_foreach_const_task
 
 #endif
