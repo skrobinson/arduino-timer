@@ -80,7 +80,7 @@ class Timer {
         if (!task) return;
 
         for (task_t &t : tasks) {
-            if (t.handler && (t.id ^ task) == reinterpret_cast<uintptr_t>(&t)) {
+            if (t->handler && task_id(&t) == task) {
                 remove(&t);
                 break;
             }
